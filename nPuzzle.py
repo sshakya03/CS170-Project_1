@@ -1,4 +1,6 @@
 import heapq as min_heap_esque_queue
+import networkx as nx
+import matplotlib.pyplot as plt
 
 sovled = [[1, 2, 3],
           [4, 5, 6],
@@ -85,6 +87,18 @@ def select_and_init_algorithm(puzzle):
                       "(2) for the Misplaced Tile Heuristic," +
                       "or (3) the Manhattan Distance Heuristic." + '\n')
     
-    
+def uniform_cost_search(puzzle, heuristic):
+    # starting_node
+    working_queue = []
+    repeated_states = dict()
+    min_heap_esque_queue.heappush(working_queue, starting_node)
+    num_nodes_expanded = 0
+
+    stack_to_print = []
+
+    while len(working_queue) > 0:
+        max_queue_size = max(len(working_queue), max_queue_size)
+        node_from_queue = min_heap_esque_
+
 if __name__ == "__main__":
     main()
