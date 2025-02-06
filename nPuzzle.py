@@ -1,14 +1,15 @@
 import heapq as min_heap_esque_queue
-import networkx as nx
-import matplotlib.pyplot as plt
+import copy
+# import networkx as nx
+# import matplotlib.pyplot as plt
 
 sovled = [[1, 2, 3],
           [4, 5, 6],
           [7, 8, 0]]
 
 light = [[1, 2, 3],
-            [4, 5, 6],
-            [7, 0, 8]]
+         [4, 5, 6],
+         [7, 0, 8]]
 
 easy = [[1, 2, 0],
         [4, 5, 3],
@@ -86,19 +87,79 @@ def select_and_init_algorithm(puzzle):
     algorithm = input("Select algorithm. (1) for Uniform Cost Search, " + 
                       "(2) for the Misplaced Tile Heuristic," +
                       "or (3) the Manhattan Distance Heuristic." + '\n')
+    if algorithm == '1':
+        uniform_cost_search(puzzle, 0)
+        
+        
+def find_blank_position(puzzle):
+    for i in range(3):          
+        for j in range(3):      
+            if puzzle[i][j] == 0:
+                return (i, j)    
+
+def move_puzzle(puzzle, direction):
+    copy_puzzle = copy.deepcopy(puzzle)
+    row, col = find_blank_position(puzzle)
     
+    if direction == "up":
+        if (row+1 < 3):
+            copy_puzzle[row][col] = copy_puzzle[row+1][col]
+            copy_puzzle[row+1][col] = 0
+            
+    if direction == "down":
+        if (row-1 >= 0) :
+            copy_puzzle[row][col] = copy_puzzle[row-1][col]
+            copy_puzzle[row-1][col] = 0
+            
+    if direction == "left":
+        if (col+1 < 3) :
+            copy_puzzle[row][col] = copy_puzzle[row][col+1]
+            copy_puzzle[row][col+1] = 0
+            
+    if direction == "right":
+        if (col-1 >= 0) :
+            copy_puzzle[row][col] = copy_puzzle[row][col-1]
+            copy_puzzle[row][col-1] = 0
+            
+    return copy_puzzle
+                
 def uniform_cost_search(puzzle, heuristic):
-    # starting_node
+    starting_node = tuple(map(tuple, puzzle))  
     working_queue = []
     repeated_states = dict()
-    min_heap_esque_queue.heappush(working_queue, starting_node)
+    min_heap_esque_queue.heappush(working_queue, (0, starting_node))
     num_nodes_expanded = 0
+    max_queue_size = 0
+    repeated_states[starting_node] = True
+    solved_puzzle = puzzle
 
     stack_to_print = []
 
     while len(working_queue) > 0:
+        print(num_nodes_expanded)
         max_queue_size = max(len(working_queue), max_queue_size)
-        node_from_queue = min_heap_esque_
+        cost, node_from_queue = min_heap_esque_queue.heappop(working_queue)
+        if node_from_queue == tuple(map(tuple, sovled)):
+            solved_puzzle = node_from_queue
+            print(f"Cost: {cost}")
+            break
+
+        node_as_list = [list(row) for row in node_from_queue]  
+
+        for direction in ["up", "down", "left", "right"]:
+            new_puzzle = move_puzzle(node_as_list, direction)  
+            new_state = tuple(map(tuple, new_puzzle))  
+
+            if new_state not in repeated_states:
+                min_heap_esque_queue.heappush(working_queue, (cost + 1, new_state))
+                repeated_states[new_state] = True
+                print_puzzle(new_puzzle)
+
+        num_nodes_expanded += 1
+
+    solution = [list(row) for row in solved_puzzle]
+    print_puzzle(solution)
+    print(f"Total nodes expanded: {num_nodes_expanded}")
 
 if __name__ == "__main__":
     main()
