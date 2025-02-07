@@ -3,7 +3,7 @@ import copy
 # import networkx as nx
 # import matplotlib.pyplot as plt
 
-sovled = [[1, 2, 3],
+solved = [[1, 2, 3],
           [4, 5, 6],
           [7, 8, 0]]
 
@@ -53,17 +53,17 @@ def main():
             puzzle_row_two[i] = int(puzzle_row_two[i])
             puzzle_row_three[i] = int(puzzle_row_three[i])
             
-        user_puzzle = [puzzle_row_one, puzzle_row_two, puzzle_row_three]
+        user_puzzle = [ puzzle_row_one, puzzle_row_two, puzzle_row_three]
         select_and_init_algorithm(user_puzzle)
     
     return
 
 def init_default_puzzle_mode():
     selected_difficulty = input("You wish to use a default puzzle. Please enter a desired " +
-                                "difficulty on a scale from 0 to 5." + '\n')
+                                "difficulty on a scale from 0 to 4." + '\n')
     if selected_difficulty == "0":
         print("Difficulty of 'Solved' selected.")
-        return sovled
+        return solved
     if selected_difficulty == "1":
         print("Difficulty of 'Light' selected.")
         return light
@@ -88,7 +88,8 @@ def select_and_init_algorithm(puzzle):
                       "(2) for the Misplaced Tile Heuristic," +
                       "or (3) the Manhattan Distance Heuristic." + '\n')
     if algorithm == '1':
-        uniform_cost_search(puzzle, 0)
+        print(manhattan_distance(puzzle))
+        # uniform_cost_search(puzzle, 0)
         
         
 def find_blank_position(puzzle):
@@ -122,6 +123,44 @@ def move_puzzle(puzzle, direction):
             copy_puzzle[row][col-1] = 0
             
     return copy_puzzle
+
+def misplaced_tile(puzzle):
+    count = 0
+    solved_flat = [num for row in solved for num in row]  
+    puzzle_flat = [num for row in puzzle for num in row]
+    
+    for i in range(len(solved_flat)):
+        if solved_flat[i] != puzzle_flat[i]:
+            count += 1
+    
+    return count
+
+def manhattan_distance(puzzle):
+    dist = 0
+    
+    for row in range(3):
+        for col in range(3):
+            num = puzzle[row][col]
+            if num > 0:
+                print(f"Num: {num}")
+                exp_y = (num-1)%3
+                print(f"exp_y: {exp_y}")
+                exp_x = (num-1)//3
+                print(f"exp_x: {exp_x}")
+                print(abs(exp_x-row) + abs(exp_y-col))
+                dist += (abs(exp_x-row) + abs(exp_y-col))
+            
+    return dist
+
+# def queueing_function(nodes, new_nodes, heuristic):
+#     for new_state, g_cost in new_nodes:
+#         h_
+
+def general_search(puzzle, queueing_function):
+    starting_node = tuple(map(tuple, puzzle))
+    working_queue = []
+    min_heap_esque_queue.heappush(working_queue, (0, starting_node))
+
                 
 def uniform_cost_search(puzzle, heuristic):
     starting_node = tuple(map(tuple, puzzle))  
@@ -136,10 +175,10 @@ def uniform_cost_search(puzzle, heuristic):
     stack_to_print = []
 
     while len(working_queue) > 0:
-        print(num_nodes_expanded)
         max_queue_size = max(len(working_queue), max_queue_size)
         cost, node_from_queue = min_heap_esque_queue.heappop(working_queue)
-        if node_from_queue == tuple(map(tuple, sovled)):
+        solved_tuple = tuple(map(tuple, solved))
+        if node_from_queue == solved_tuple:
             solved_puzzle = node_from_queue
             print(f"Cost: {cost}")
             break
@@ -157,8 +196,7 @@ def uniform_cost_search(puzzle, heuristic):
 
         num_nodes_expanded += 1
 
-    solution = [list(row) for row in solved_puzzle]
-    print_puzzle(solution)
+    print_puzzle(solved_puzzle)
     print(f"Total nodes expanded: {num_nodes_expanded}")
 
 if __name__ == "__main__":
