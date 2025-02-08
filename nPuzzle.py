@@ -1,7 +1,5 @@
 import heapq as min_heap_esque_queue
 import copy
-# import networkx as nx
-# import matplotlib.pyplot as plt
 
 solved = [[1, 2, 3],
           [4, 5, 6],
@@ -23,11 +21,74 @@ hard =  [[8, 7, 1],
          [6, 0, 2],
          [5, 4, 3]]
 
-class TreeNode:
-    def __init__(self, value):
-        self.value = value
-        self.left = None
-        self.right = None
+puzzle_15 = [[ 1,  2,  3,  4 ],
+            [ 5,  6,  7,  8 ],
+            [ 9, 10, 11, 12 ],
+            [13,  0, 14, 15 ]]
+
+class Node:
+    def __init__(self, board, depth=0, heuristic=0, parent=None):
+        self.board = [row[:] for row in board]  
+        self.depth = depth
+        self.heuristic = heuristic
+        self.parent = parent
+        self.children = []
+    
+    def get_board(self):
+        return [row[:] for row in self.board]
+    
+    def get_depth(self):
+        return self.depth
+    
+    def __lt__(self, other):
+        self_depth_heuristic = (self.depth or 0) + (self.heuristic or 0)
+        other_depth_heuristic = (other.depth or 0) + (other.heuristic or 0)
+        return self_depth_heuristic < other_depth_heuristic
+
+    def set_heuristic(self, value):
+        self.heuristic = value
+        
+    def get_heuristic(self):
+        return self.heuristic
+        
+    def get_parent(self):
+        return self.parent
+    
+    def move(self, queueing_function):
+        children = []
+        row, col = find_blank_position(self.board)
+        size = len(self.board)
+    
+        if (row+1 < size):
+            copy_puzzle1 = copy.deepcopy(self.board)
+            copy_puzzle1[row][col] = copy_puzzle1[row+1][col]
+            copy_puzzle1[row+1][col] = 0
+            newNode = Node(copy_puzzle1,self.depth+1,queueing_function(copy_puzzle1),self)
+            children.append(newNode)
+                
+        if (row-1 >= 0) :
+            copy_puzzle2 = copy.deepcopy(self.board)
+            copy_puzzle2[row][col] = copy_puzzle2[row-1][col]
+            copy_puzzle2[row-1][col] = 0
+            newNode = Node(copy_puzzle2,self.depth+1,queueing_function(copy_puzzle2),self)
+            children.append(newNode)
+                
+        if (col+1 < size) :
+            copy_puzzle3 = copy.deepcopy(self.board)
+            copy_puzzle3[row][col] = copy_puzzle3[row][col+1]
+            copy_puzzle3[row][col+1] = 0
+            newNode = Node(copy_puzzle3,self.depth+1,queueing_function(copy_puzzle3),self)
+            children.append(newNode)
+                
+        if (col-1 >= 0) :
+            copy_puzzle4 = copy.deepcopy(self.board)
+            copy_puzzle4[row][col] = copy_puzzle4[row][col-1]
+            copy_puzzle4[row][col-1] = 0
+            newNode = Node(copy_puzzle4,self.depth+1,queueing_function(copy_puzzle4),self)
+            children.append(newNode)
+            
+        return children
+        
 
 def main():
     puzzle_mode = input("Welcome to an 8-Puzzle Solver. Type '1' to use a default puzzle, or '2' to create your own." + '\n')
@@ -38,7 +99,7 @@ def main():
     if puzzle_mode == "2":
         print("Enter your puzzle, using a zero to represent the blank. " +
               "Please only enter valid 8-puzzles. Enter the puzzle delimiting " +
-              "the numbers with a space. RET when finished" + '\n')
+              "the numbers with a space. RETURN when finished" + '\n')
         
         puzzle_row_one = input("Enter the first row: ")
         puzzle_row_two = input("Enter the second row: ")
@@ -60,7 +121,7 @@ def main():
 
 def init_default_puzzle_mode():
     selected_difficulty = input("You wish to use a default puzzle. Please enter a desired " +
-                                "difficulty on a scale from 0 to 4." + '\n')
+                                "difficulty on a scale from 0 to 5." + '\n')
     if selected_difficulty == "0":
         print("Difficulty of 'Solved' selected.")
         return solved
@@ -76,128 +137,114 @@ def init_default_puzzle_mode():
     if selected_difficulty == "4":
         print("Difficulty of 'Hard' selected.")
         return hard
+    if selected_difficulty == "5":
+        print("Difficulty of '15-puzzle' selected.")
+        return puzzle_15
 
 def print_puzzle(puzzle):
-    for i in range(0,3):
+    for i in range(0,len(puzzle)):
         print(puzzle[i])
-    print("\n")
     
 
 def select_and_init_algorithm(puzzle):
     algorithm = input("Select algorithm. (1) for Uniform Cost Search, " + 
-                      "(2) for the Misplaced Tile Heuristic," +
+                      "(2) for the Misplaced Tile Heuristic, " +
                       "or (3) the Manhattan Distance Heuristic." + '\n')
     if algorithm == '1':
-        print(manhattan_distance(puzzle))
-        # uniform_cost_search(puzzle, 0)
+        general_search(puzzle, uniform_cost_search)
         
+    if algorithm == '2':
+        general_search(puzzle, misplaced_tile)
+    
+    if algorithm == '3':
+        general_search(puzzle, manhattan_distance)
         
 def find_blank_position(puzzle):
-    for i in range(3):          
-        for j in range(3):      
-            if puzzle[i][j] == 0:
-                return (i, j)    
+    size = len(puzzle)
+    for row in range(size):          
+        for col in range(size):      
+            if puzzle[row][col] == 0:
+                return (row, col)    
 
-def move_puzzle(puzzle, direction):
-    copy_puzzle = copy.deepcopy(puzzle)
-    row, col = find_blank_position(puzzle)
-    
-    if direction == "up":
-        if (row+1 < 3):
-            copy_puzzle[row][col] = copy_puzzle[row+1][col]
-            copy_puzzle[row+1][col] = 0
-            
-    if direction == "down":
-        if (row-1 >= 0) :
-            copy_puzzle[row][col] = copy_puzzle[row-1][col]
-            copy_puzzle[row-1][col] = 0
-            
-    if direction == "left":
-        if (col+1 < 3) :
-            copy_puzzle[row][col] = copy_puzzle[row][col+1]
-            copy_puzzle[row][col+1] = 0
-            
-    if direction == "right":
-        if (col-1 >= 0) :
-            copy_puzzle[row][col] = copy_puzzle[row][col-1]
-            copy_puzzle[row][col-1] = 0
-            
-    return copy_puzzle
+def generate_solved_state(size):
+    solved_state = [[(i * size + j + 1) % (size * size) for j in range(size)] for i in range(size)]
+    return solved_state
+
 
 def misplaced_tile(puzzle):
+    size = len(puzzle)  
+    every_solved = generate_solved_state(size)
+    
     count = 0
-    solved_flat = [num for row in solved for num in row]  
+    solved_flat = [num for row in every_solved for num in row]  
     puzzle_flat = [num for row in puzzle for num in row]
     
     for i in range(len(solved_flat)):
-        if solved_flat[i] != puzzle_flat[i]:
+        if solved_flat[i] != puzzle_flat[i] and puzzle_flat[i] != 0:
             count += 1
     
     return count
 
 def manhattan_distance(puzzle):
     dist = 0
+    size = len(puzzle)
     
-    for row in range(3):
-        for col in range(3):
+    for row in range(size):
+        for col in range(size):
             num = puzzle[row][col]
-            if num > 0:
-                print(f"Num: {num}")
-                exp_y = (num-1)%3
-                print(f"exp_y: {exp_y}")
-                exp_x = (num-1)//3
-                print(f"exp_x: {exp_x}")
-                print(abs(exp_x-row) + abs(exp_y-col))
-                dist += (abs(exp_x-row) + abs(exp_y-col))
+            if num != 0:
+                exp_col = (num-1)%size
+                exp_row = (num-1)//size
+                dist += (abs(exp_row-row) + abs(exp_col-col))
             
     return dist
 
-# def queueing_function(nodes, new_nodes, heuristic):
-#     for new_state, g_cost in new_nodes:
-#         h_
+def uniform_cost_search(puzzle):
+    return 0
+
 
 def general_search(puzzle, queueing_function):
-    starting_node = tuple(map(tuple, puzzle))
-    working_queue = []
-    min_heap_esque_queue.heappush(working_queue, (0, starting_node))
-
-                
-def uniform_cost_search(puzzle, heuristic):
-    starting_node = tuple(map(tuple, puzzle))  
+    starting_node = Node(puzzle, depth=0, heuristic=queueing_function(puzzle))
     working_queue = []
     repeated_states = dict()
-    min_heap_esque_queue.heappush(working_queue, (0, starting_node))
+    min_heap_esque_queue.heappush(working_queue, starting_node)
     num_nodes_expanded = 0
     max_queue_size = 0
-    repeated_states[starting_node] = True
-    solved_puzzle = puzzle
-
-    stack_to_print = []
-
+    size = len(puzzle)
+    
     while len(working_queue) > 0:
         max_queue_size = max(len(working_queue), max_queue_size)
-        cost, node_from_queue = min_heap_esque_queue.heappop(working_queue)
-        solved_tuple = tuple(map(tuple, solved))
-        if node_from_queue == solved_tuple:
-            solved_puzzle = node_from_queue
-            print(f"Cost: {cost}")
-            break
-
-        node_as_list = [list(row) for row in node_from_queue]  
-
-        for direction in ["up", "down", "left", "right"]:
-            new_puzzle = move_puzzle(node_as_list, direction)  
-            new_state = tuple(map(tuple, new_puzzle))  
-
-            if new_state not in repeated_states:
-                min_heap_esque_queue.heappush(working_queue, (cost + 1, new_state))
-                repeated_states[new_state] = True
-                print_puzzle(new_puzzle)
-
+        current_node = min_heap_esque_queue.heappop(working_queue)
+        if current_node.get_board() == generate_solved_state(size):
+            stack_to_print = [current_node]
+            iter_node = copy.deepcopy(current_node)
+            while iter_node.get_parent() is not None:
+                stack_to_print.append(iter_node.get_parent())
+                iter_node = iter_node.get_parent()
+                
+            for element in reversed(stack_to_print):
+                print(f"The best state to expand with a g(n) = {element.get_depth()} and h(n) = {element.get_heuristic()} is...")
+                print_puzzle(element.get_board())
+                
+            print(f"Solution depth was {current_node.get_depth()}")
+            print(f"Number of nodes expanded: {num_nodes_expanded}")
+            print(f"Max queue size: {max_queue_size}")
+            
+            return
+        
+        current_node_tuple = tuple(map(tuple, current_node.get_board()))
+        repeated_states[current_node_tuple] = True
+        children = current_node.move(queueing_function)
+        
+        for child in children:
+            child_state = tuple(map(tuple, child.get_board()))
+            if child_state not in repeated_states:
+                min_heap_esque_queue.heappush(working_queue, child)
+                repeated_states[child_state] = True
+                
         num_nodes_expanded += 1
-
-    print_puzzle(solved_puzzle)
-    print(f"Total nodes expanded: {num_nodes_expanded}")
-
+    
+    return "failure"        
+        
 if __name__ == "__main__":
     main()
