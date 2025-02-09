@@ -1,5 +1,6 @@
 import heapq as min_heap_esque_queue
 import copy
+import time
 
 solved = [[1, 2, 3],
           [4, 5, 6],
@@ -25,6 +26,13 @@ puzzle_15 = [[ 1,  2,  3,  4 ],
             [ 5,  6,  7,  8 ],
             [ 9, 10, 11, 12 ],
             [13,  0, 14, 15 ]]
+
+def find_blank_position(puzzle):
+    size = len(puzzle)
+    for row in range(size):          
+        for col in range(size):      
+            if puzzle[row][col] == 0:
+                return (row, col)    
 
 class Node:
     def __init__(self, board, depth=0, heuristic=0, parent=None):
@@ -90,7 +98,20 @@ class Node:
         return children
         
 
+def run_timer():
+    start_time = time.perf_counter()  # Get the start time with higher precision
+    print("Timer started...")
+    
+    # Simulating some task or delay
+    time.sleep(2)  # Replace with the actual task you want to time
+    
+    end_time = time.perf_counter()  # Get the end time
+    
+    elapsed_time = (end_time - start_time) * 1000  # Convert to milliseconds
+    print(f"Task completed in {elapsed_time:.3f} milliseconds.")
+
 def main():
+    run_timer
     puzzle_mode = input("Welcome to an 8-Puzzle Solver. Type '1' to use a default puzzle, or '2' to create your own." + '\n')
 
     if puzzle_mode == "1":
@@ -159,12 +180,6 @@ def select_and_init_algorithm(puzzle):
     if algorithm == '3':
         general_search(puzzle, manhattan_distance)
         
-def find_blank_position(puzzle):
-    size = len(puzzle)
-    for row in range(size):          
-        for col in range(size):      
-            if puzzle[row][col] == 0:
-                return (row, col)    
 
 def generate_solved_state(size):
     solved_state = [[(i * size + j + 1) % (size * size) for j in range(size)] for i in range(size)]
@@ -204,6 +219,7 @@ def uniform_cost_search(puzzle):
 
 
 def general_search(puzzle, queueing_function):
+    start_time = time.perf_counter()
     starting_node = Node(puzzle, depth=0, heuristic=queueing_function(puzzle))
     working_queue = []
     repeated_states = dict()
@@ -215,7 +231,12 @@ def general_search(puzzle, queueing_function):
     while len(working_queue) > 0:
         max_queue_size = max(len(working_queue), max_queue_size)
         current_node = min_heap_esque_queue.heappop(working_queue)
+        
+        print(f"The best state to expand with a g(n) = {current_node.get_depth()} and h(n) = {current_node.get_heuristic()} is...")
+        print_puzzle(current_node.get_board())
+        
         if current_node.get_board() == generate_solved_state(size):
+            print("\nSolution found! Printing solution path:")
             stack_to_print = [current_node]
             iter_node = copy.deepcopy(current_node)
             while iter_node.get_parent() is not None:
@@ -229,6 +250,10 @@ def general_search(puzzle, queueing_function):
             print(f"Solution depth was {current_node.get_depth()}")
             print(f"Number of nodes expanded: {num_nodes_expanded}")
             print(f"Max queue size: {max_queue_size}")
+            
+            end_time = time.perf_counter()  # Get the end time
+            elapsed_time = (end_time - start_time) * 1000  # Convert to milliseconds
+            print(f"Task completed in {elapsed_time:.3f} milliseconds.")
             
             return
         
@@ -244,6 +269,10 @@ def general_search(puzzle, queueing_function):
                 
         num_nodes_expanded += 1
     
+    end_time = time.perf_counter()  # Get the end time
+    elapsed_time = (end_time - start_time) * 1000  # Convert to milliseconds
+    print(f"Failed task completed in {elapsed_time:.3f} milliseconds.")
+        
     return "failure"        
         
 if __name__ == "__main__":
